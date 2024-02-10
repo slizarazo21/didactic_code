@@ -1,5 +1,5 @@
 # didactic_code
-This repository has information about different code snippets that are resourceful. It also has an explanation of what the code does It will be constantly growing
+This repository has information about different code snippets that are resourceful. It also has an explanation of what the code does. It will be constantly growing.
 
 Each folder has information about the type of code you can run.
 

@@ -12,3 +12,5 @@ This shell script will run X number of jobs *at the time*. Let's say you have 50
 ### 2. **r_markdown**
    - **Multiple_Job_Submission.rmd**
 This R Markdown file will help you process multiple files simultaneously in an HPC system. If you have n number of sequencing experiments with raw data (fastq) and want to process them all simultaneously, this code is for you!
+- **SQL_101.Rmd**
+This R Markdown will walk you through a basic SELECTION query using SQL databases. It also teaches you how to create your own database and add files to it for further manipulation.

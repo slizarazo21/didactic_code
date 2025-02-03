@@ -1,0 +1,147 @@
+---
+title: "SQL 101 For Everyone!"
+author: "Simon L"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T)
+#install.packages('DBI')
+#install.packages('RSQLite')
+library(RSQLite)
+library(DBI)
+```
+
+## A quick, easy walkthrough for SQL!
+
+SQL is a worldwide language used to manage data that is held in relational databases. The good thing is that we can handle SQL databases in R studio. To achieve this, we need to make sure we have the required packages
+
+Once we have our package installed, we are going to make a connection to an SQL Server.
+
+There are some things you need to keep in mind, let's clarify:
+
+-   You need a sql database, make sure you known the information of the different databases you are going to use.
+
+-   In case you want to create your own database and add files to your database follow the following short tutorial
+
+### Making a database and adding files
+
+1.  Create a connection and a database. In this example I am creating a database called `genomic_database.sqlite` in the Documents folder.
+
+Now there's an open connection
+
+```{r, eval = F}
+connect = dbConnect(RSQLite::SQLite(), '~/Documents/genomic_database.sqlite')
+```
+
+2.  Adding files. Choose whichever file you want. Once you have the file in the format you want, you can save it in your database by using the function `dbWriteTable` and assign the names you prefer. In this example I am adding two dataframes, one that has information about downsizing factors based on a previously established optimal sequencing depth and another one that has information about files names and experiments.
+
+```{r, eval = F}
+data = read.delim('file.txt', sep = ',')
+dbWriteTable(connect, 'downsize_factors', data, overwrite = T)
+
+data = read.delim('file2.txt', sep = '\t')
+dbWriteTable(connect, 'dataframe_experiment_info', data, overwrite = T)
+```
+
+This database can be found on the following directory on github <https://github.com/slizarazo21/didactic_code/tree/main/r_markdown>
+
+### Establishing a connection and making SQL queries. 
+
+Now that we have our database we are ready to start our analysis. Let's start a connection specifying what database we want to work with
+
+```{r}
+connect = dbConnect(SQLite(), '~/Documents/genomic_database.sqlite')
+
+```
+
+#### A SELECT Queries.
+
+The basic structure for a select query on sql goes as follows
+
+```{sql, connection = connect, eval = F}
+
+SELECT column1, column2, ...
+FROM mydataframe
+WHERE a condition for your analysis
+ORDER BY column1, column2 ASC/DESC
+```
+
+Our querie is very intuitive, we are subseting a specific column (or columns) from a data frame and we want to see the data that exists based on a condition.
+
+Let's start with observing all the columns present in the dataframe downsize factors. For that the token `*` will select everything!
+
+```{sql, connection = connect}
+
+SELECT *
+FROM downsize_factors
+```
+
+Now let's select only the column Experiment Seqdepth. Pretty straight-forward right?.
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth
+FROM downsize_factors
+```
+
+Let's include some conditions. The command `WHERE` requires different operators, a list of some useful operators can be found here <https://www.w3schools.com/sql/sql_where.asp> (With more examples too!).
+
+Let's find the observations where the `factor` column is less than 0.5 and let's display only the columns `Experiment` and `Seqdepth`
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth
+FROM downsize_factors
+WHERE factor < 0.5
+```
+
+We can also use other operators like `BETWEEN`. Let's look for those that are between 0.55 and 0.56
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth, factor
+FROM downsize_factors
+WHERE factor BETWEEN 0.55 AND 0.56
+```
+
+We can start making more complex queries. For example let's order the previous query by `Seqdepth`, for that you can use `ORDER BY` and specify the ordering with `ASC/DESC`
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth, factor
+FROM downsize_factors
+WHERE factor BETWEEN 0.55 AND 0.56
+ORDER BY Seqdepth DESC
+```
+
+Moreover we can look for string matching. In that dataframe we have different types of cancers. Let's make a query where we are filtering by `factor` \> 0.5, but we want to look for BRCA cancer. For that we can use `AND/OR` and other string matching attributes like `LIKE`, `%%` and `_` **(These last attributes ALWAYS need to have the `LIKE` command)**
+
+The %% operator, will look for matching strings. For example, vector A has the following strings
+
+`A = c( 'CASA', 'MASA', 'LAZO', 'TAZO', 'AMASAR')`
+
+If in my querie I put `WHERE A LIKE '%AS%'` I will get all the words that match the string `AS`. Thus we would get `CASA, MASA, AMASAR`
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth, factor
+FROM downsize_factors
+WHERE factor > 0.5
+  AND experiment LIKE '%BRCA%'
+ORDER BY Seqdepth DESC
+```
+
+Let's subset for two specific types of cancer, for example COAD and LGG. In this case our condition query has the following form:
+
+`( condition 1 AND (condition 2))`
+
+`Where condition 2 = (Condition 3 OR condition 4)`
+
+```{sql, connection = connect}
+SELECT Experiment, Seqdepth, factor
+FROM downsize_factors
+WHERE factor > 0.5
+  AND (experiment LIKE '%COAD%' OR experiment LIKE '%LGG%')
+ORDER BY Seqdepth DESC
+```
+
+```{r}
+dbDisconnect(connect)
+```
+
